@@ -7,6 +7,8 @@ create table jsonSample (a int, b varchar, c_d int, c_e varchar);
 
 COPY jsonSample from stdin with filter PyJsonFilter() parser fjsonparser();
 {"a":1,"b":"foo","c":{"d":2,"e":"bar"}}
+{"a":1,"b":"foo","c":{"e":"bar"}}
+{"a":1,"b":"foo"}
 \.
 
 select * from jsonSample;

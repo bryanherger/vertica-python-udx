@@ -2,8 +2,7 @@ import datetime
 import json
 import vertica_sdk
 
-# Function for flattening 
-# json
+# Function for flattening json
 def flatten_json(y):
     out = {}
   
@@ -40,14 +39,44 @@ class PyJsonFilter(vertica_sdk.UDFilter):
         pass
 
     def process(self, srvInterface, inputbuffer, inputstate, outputbuffer):
+        if inputstate == vertica_sdk.InputState.END_OF_FILE and inputbuffer.getSize() == 0:
+            srvInterface.log("EOF / end of buffer")
+            return vertica_sdk.StreamState.DONE
         # User process data here, and put into outputbuffer.
-        inp = inputbuffer.read()
-        jsonIn = json.loads(inp.decode())
-        # inp = inp + ".json"
-        # j['filter'] = 'true'
-        jsonOut = flatten_json(jsonIn)
-        outputbuffer.write(json.dumps(jsonOut).encode())
-        return vertica_sdk.StreamState.DONE
+        buffer = str()
+        jsons = []
+        while inputbuffer.getOffset() < inputbuffer.getSize():
+            thisbyte = inputbuffer.read(1)
+            # srvInterface.log("thisbyte = "+str(thisbyte))
+            if thisbyte == b'\n':
+                # srvInterface.log("json = "+buffer)
+                jsons.append(buffer)
+                buffer = str()
+                if inputstate == vertica_sdk.InputState.END_OF_FILE:
+                    continue
+                else:
+                    break
+            buffer = buffer + thisbyte.decode()
+        # inp = inputbuffer.read()
+        # jsons = inp.decode().split("\n")
+        srvInterface.log("jsons="+str(len(jsons)))
+        cc = 0
+        for j in jsons:
+            # srvInterface.log("j("+str(cc)+")="+j)
+            cc = cc + 1  
+            try:
+                jsonIn = json.loads(j)
+            except json.decoder.JSONDecodeError:
+                srvInterface.log("Invalid JSON j="+j)
+                continue
+            # inp = inp + ".json"
+            # j['filter'] = 'true'
+            jsonOut = flatten_json(jsonIn)
+            outputbuffer.write(json.dumps(jsonOut).encode())
+        if inputstate == vertica_sdk.InputState.END_OF_FILE:
+            srvInterface.log("EOF / size "+str(inputbuffer.getSize())+" / offset"+str(inputbuffer.getOffset()))
+            return vertica_sdk.StreamState.DONE
+        return vertica_sdk.StreamState.INPUT_NEEDED
 
 class PyJsonFilterFactory(vertica_sdk.FilterFactory):
     def __init__(self):
