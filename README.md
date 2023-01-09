@@ -18,16 +18,13 @@ pip3 install pycryptodome
 ```
 Then run ddl/install.sql
 
-## UDSF example: reverseGeocode
-reverseGeocode uses OpenStreetMap Nominatim and Python geopy to convert a (latitude,longitude) pair into a human readable address string.
+## UDSF example: reverseGeocode 
+reverseGeocode uses OpenStreetMap Nominatim and Python geopy to convert a (latitude,longitude) pair into a human readable address string.  All needed files are in the `reversegeocode` folder.
 
-In order to use this, you'll also need to create a virtualenv with geopy and copy the site-packages as a dependency.
+In order to use this, you'll need to create a virtualenv with geopy and copy the site-packages as a dependency. It's best to run on a Vertica node so the venv will be the same version as Vertica's bundled Python distribution.
+The script "mkgeopyvenv.sh" will create a virtual environment using Vertica's Python package under /tmp that will be loaded as a dependency by the SQL script.  If you create one elsewhere, you'll need to edit the SQL to point to the correct venv path.
 
-Create the virtualenv under /tmp with "/opt/vertica/oss/python3/bin/python3.9 -m venv geocode".  Activate the virtualenv and run the following to install geopy:
-```
-pip3 install geopy
-```
-Then edit the SQL file with the DEPENDS folder where geopy was installed.  Run with `vsql -f` The sample query should return:
+Run the SQL with `vsql -U <user> -w <password> -e -f ST_ReverseGeocode.sql`  The sample query should return:
 ```
 SELECT reverseGeocode(40.773408,-73.870676);
                                       reverseGeocode
@@ -35,6 +32,8 @@ SELECT reverseGeocode(40.773408,-73.870676);
  LaGuardia Airport, Runway Drive, Queens, City of New York, New York, 11371, United States
 (1 row)
 ```
+
+Note that the sample SQL 
 
 ## UDFilter example: PyJsonFilter
 PyJsonFilter shows how to flatten JSON with a filter.  This is similar to the built-in behavior of the JSON parser.
