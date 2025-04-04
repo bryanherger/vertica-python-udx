@@ -41,3 +41,6 @@ PyJsonFilter shows how to flatten JSON with a filter.  This is similar to the bu
 To run the example:
 
 vsql -U user -w pass -f PythonUDFilter.sql
+
+## UDSF example: cosine similarity (array/vector UDSF)
+vector_udx shows hows to compute cosine similarity using numeric arrays as input vectors.  See the end of the file for installation notes and example usage.
